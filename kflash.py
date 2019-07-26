@@ -1377,14 +1377,19 @@ class KFlash:
         if file_format == ProgramFileFormat.FMT_KFPKG:
             KFlash.log(INFO_MSG,"Extracting KFPKG ... ", BASH_TIPS['DEFAULT'])
             firmware_bin.close()
-            with tempfile.TemporaryDirectory() as tmpdir:
-                try:
-                    with zipfile.ZipFile(args.firmware) as zf:
-                        zf.extractall(tmpdir)
-                except zipfile.BadZipFile:
-                    err = (ERROR_MSG,'Unable to Decompress the kfpkg, your file might be corrupted.',BASH_TIPS['DEFAULT'])
-                    err = tuple2str(err)
-                    raise_exception( Exception(err) )
+            
+            if sys.version_info.major == 3:
+                tmpdir = tempfile.TemporaryDirectory()
+            else:
+                tmpdir = tempfile.mkdtemp()[1]
+                
+            try:
+                with zipfile.ZipFile(args.firmware) as zf:
+                    zf.extractall(tmpdir)
+            except:
+                err = (ERROR_MSG,'Unable to Decompress the kfpkg, your file might be corrupted.',BASH_TIPS['DEFAULT'])
+                err = tuple2str(err)
+                raise_exception( Exception(err) )
 
                 fFlashList = open(os.path.join(tmpdir, 'flash-list.json'), "r")
                 sFlashList = re.sub(r'"address": (.*),', r'"address": "\1",', fFlashList.read()) #Pack the Hex Number in json into str
